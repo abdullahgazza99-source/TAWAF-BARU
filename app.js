@@ -598,26 +598,37 @@ function drawCanvas() {
             }
         }
 
-        // 3b. Draw Username (Besar & Tebal di dalam Lingkaran)
-        ctx.fillStyle = (u.characterMode !== 'text' && u.giftCategory === 'besar') ? '#451a03' : (u.characterMode !== 'text' ? '#0f172a' : '#ffffff');
+      // 3b. Draw Username (Font Tebal, Berwarna, + Outline & Bayangan Hitam)
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
         let fontSize = Math.floor(r * 0.55);
         if (u.characterMode === 'text') fontSize = Math.floor(22 * scale);
-        
-        ctx.font = `900 ${fontSize}px Inter, sans-serif`;
 
-        // Fit Text width inside circle
-        const maxTextWidth = u.characterMode !== 'text' ? r * 1.6 : 300;
-        let textWidth = ctx.measureText(`@${u.username}`).width;
-        if (textWidth > maxTextWidth) {
-            fontSize = Math.floor(fontSize * (maxTextWidth / textWidth));
-            ctx.font = `900 ${fontSize}px Inter, sans-serif`;
+        // Tentukan Warna Berdasarkan Mode Karakter (Biasa=Putih, Sedang=Hijau, Besar=Oren)
+        let textColor = '#FFFFFF'; // Putih (Biasa)
+        if (u.characterMode === 'shape') {
+            textColor = '#34D399'; // Hijau (Sedang)
+        } else if (u.characterMode === 'icon') {
+            textColor = '#F97316'; // Oren (Besar)
         }
 
-        ctx.shadowColor = u.characterMode === 'text' ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.2)';
-        ctx.shadowBlur = u.characterMode === 'text' ? 6 : 0;
+        // Set Font Paling Tebal (Rubik 900)
+        ctx.font = `900 ${fontSize}px 'Rubik', Impact, sans-serif`;
+
+        // 1. Gambar Garis Tepi (Stroke) Hitam Tebal
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = Math.max(3, fontSize * 0.18);
+        ctx.strokeText(`@${u.username}`, 0, 0);
+
+        // 2. Gambar Bayangan Hitam di Belakang Teks
+        ctx.shadowColor = '#000000';
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#000000';
+        ctx.fillText(`@${u.username}`, 2, 2);
+
+        // 3. Gambar Teks Utama dengan Warna Pilihan
+        ctx.fillStyle = textColor;
         ctx.fillText(`@${u.username}`, 0, 0);
 
         // 3c. Draw Lap Indicator (Bawah Lingkaran)
