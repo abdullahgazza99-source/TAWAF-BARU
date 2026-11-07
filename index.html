@@ -12,21 +12,6 @@
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@900&display=swap" rel="stylesheet">
-
-<style>
-  .font-ultra-block {
-    font-family: 'Rubik', Impact, sans-serif;
-    font-weight: 900;
-    /* Outline Hitam Tebal */
-    -webkit-text-stroke: 1.5px #000000;
-    paint-order: stroke fill;
-    /* Bayangan Hitam Tegas */
-    text-shadow: 2px 2px 0px #000000;
-  }
-</style>
-
     
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -132,8 +117,8 @@
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-300">OBS Canvas Output (9:16)</span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button id="btn-audio-init" onclick="toggleAudioPlay()" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1 rounded-md text-amber-400 transition flex items-center gap-1">
-                        <i id="audio-btn-icon" class="fa-solid fa-play"></i> <span id="audio-btn-text">Putar Audio</span>
+                    <button id="btn-audio-init" onclick="initAudioContext()" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1 rounded-md text-amber-400 transition">
+                        <i class="fa-solid fa-volume-high mr-1"></i> Aktifkan Suara
                     </button>
                     <button onclick="toggleFullscreen()" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-1 rounded-md text-slate-400 transition" title="Layar Penuh">
                         <i class="fa-solid fa-expand"></i>
@@ -147,10 +132,6 @@
                     <span class="text-xs font-bold text-slate-200"><span id="live-active-count">0</span> Jamaah Tawaf</span>
                 </div>
                 <div class="absolute top-4 right-4 bg-slate-950/80 backdrop-blur border border-amber-500/30 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-lg pointer-events-none">
-                    <i class="fa-solid fa-hourglass-start text-blue-400 text-xs"></i>
-                    <span class="text-xs font-bold text-slate-200"><span id="live-queue-count">0</span> Antrean Pagar</span>
-                </div>
-                <div class="absolute top-12 right-4 bg-slate-950/80 backdrop-blur border border-amber-500/30 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-lg pointer-events-none mt-1">
                     <i class="fa-solid fa-rotate-right text-emerald-400 text-xs"></i>
                     <span class="text-xs font-bold text-slate-200"><span id="live-total-laps">0</span> Total Putaran</span>
                 </div>
@@ -165,39 +146,20 @@
         <section id="view-admin" class="hidden space-y-6">
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 text-xl font-bold"><i class="fa-solid fa-hourglass-half"></i></div>
-                    <div><p class="text-xs text-slate-400">Antrean Pagar</p><h3 id="stat-queue" class="text-xl font-extrabold text-blue-400">0</h3></div>
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 text-xl font-bold"><i class="fa-solid fa-user-plus"></i></div>
+                    <div><p class="text-xs text-slate-400">Total Ditambah</p><h3 id="stat-total-spawned" class="text-xl font-extrabold text-slate-100">0</h3></div>
                 </div>
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
                     <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl font-bold"><i class="fa-solid fa-walking"></i></div>
-                    <div><p class="text-xs text-slate-400">Aktif Tawaf</p><h3 id="stat-active" class="text-xl font-extrabold text-emerald-400">0</h3></div>
+                    <div><p class="text-xs text-slate-400">Aktif Bergerak</p><h3 id="stat-active" class="text-xl font-extrabold text-emerald-400">0</h3></div>
                 </div>
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
                     <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-xl font-bold"><i class="fa-solid fa-flag-checkered"></i></div>
-                    <div><p class="text-xs text-slate-400">Selesai (Auto Remove)</p><h3 id="stat-completed" class="text-xl font-extrabold text-amber-400">0</h3></div>
+                    <div><p class="text-xs text-slate-400">Selesai 5 Tawaf</p><h3 id="stat-completed" class="text-xl font-extrabold text-amber-400">0</h3></div>
                 </div>
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
                     <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 text-xl font-bold"><i class="fa-solid fa-rotate text-lg"></i></div>
                     <div><p class="text-xs text-slate-400">Total Putaran</p><h3 id="stat-laps" class="text-xl font-extrabold text-purple-300">0</h3></div>
-                </div>
-            </div>
-
-            <!-- TOMBOL AKSI CEPAT ANTREAN -->
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-door-open text-amber-400 text-xl"></i>
-                    <div>
-                        <h3 class="font-bold text-slate-100 text-sm">Kontrol Gerbang Pagar Masuk</h3>
-                        <p class="text-xs text-slate-400">Izinkan user antrean di luar pagar untuk mulai bertawaf</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="approveQueueUser(1)" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-lg transition">
-                        <i class="fa-solid fa-person-walking-arrow-right"></i> Masukkan 1 User
-                    </button>
-                    <button onclick="approveQueueUser('all')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-lg transition">
-                        <i class="fa-solid fa-users-rectangle"></i> Masukkan Semua Antrean
-                    </button>
                 </div>
             </div>
 
@@ -211,7 +173,7 @@
                             <div>
                                 <label class="block text-xs font-semibold text-slate-300 mb-1">Username Penonton</label>
                                 <div class="relative">
-                                    <span class="absolute left-3.5 top-2.5 text-slate-500 text-sm font-bold"></span>
+                                    <span class="absolute left-3.5 top-2.5 text-slate-500 text-sm font-bold">@</span>
                                     <input type="text" id="input-username" required placeholder="misal: ahmad_hidayat" class="w-full bg-slate-950 border border-slate-700 rounded-xl py-2.5 pl-8 pr-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 transition">
                                 </div>
                             </div>
@@ -236,94 +198,98 @@
                                 </div>
                             </div>
                             
-                           <div>
-    <label class="block text-xs font-semibold text-slate-300 mb-2">Tampilan Karakter</label>
-    <div class="grid grid-cols-3 gap-2">
-        <!-- BIASA: Teks Putih -->
-        <label class="cursor-pointer border border-slate-700 rounded-xl p-2 text-center transition hover:bg-slate-800 bg-slate-950 has-[:checked]:border-emerald-400 has-[:checked]:bg-slate-800">
-            <input type="radio" name="characterMode" value="text" checked class="sr-only">
-            <i class="fa-solid fa-font text-emerald-400 mb-1"></i>
-            <span class="block text-[10px] font-ultra-block text-white uppercase tracking-wider">Teks Saja</span>
-        </label>
+                            <!-- Pilihan Mode Karakter -->
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-2">Tampilan Karakter</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <label class="cursor-pointer border border-slate-700 rounded-xl p-2 text-center transition hover:bg-slate-800 bg-slate-950 has-[:checked]:border-emerald-400 has-[:checked]:bg-slate-800">
+                                        <input type="radio" name="characterMode" value="text" checked class="sr-only">
+                                        <i class="fa-solid fa-font text-emerald-400 mb-1"></i>
+                                        <span class="block text-[10px] font-bold text-slate-200">Teks Saja</span>
+                                    </label>
+                                    <label class="cursor-pointer border border-slate-700 rounded-xl p-2 text-center transition hover:bg-slate-800 bg-slate-950 has-[:checked]:border-emerald-400 has-[:checked]:bg-slate-800">
+                                        <input type="radio" name="characterMode" value="shape" class="sr-only">
+                                        <i class="fa-solid fa-circle text-emerald-400 mb-1"></i>
+                                        <span class="block text-[10px] font-bold text-slate-200">Teks + Shape</span>
+                                    </label>
+                                    <label class="cursor-pointer border border-slate-700 rounded-xl p-2 text-center transition hover:bg-slate-800 bg-slate-950 has-[:checked]:border-emerald-400 has-[:checked]:bg-slate-800">
+                                        <input type="radio" name="characterMode" value="icon" class="sr-only">
+                                        <i class="fa-solid fa-user text-emerald-400 mb-1"></i>
+                                        <span class="block text-[10px] font-bold text-slate-200">Teks + Icon</span>
+                                    </label>
+                                </div>
+                            </div>
 
-        <!-- SEDANG: Teks Hijau -->
-        <label class="cursor-pointer border border-slate-700 rounded-xl p-2 text-center transition hover:bg-slate-800 bg-slate-950 has-[:checked]:border-emerald-400 has-[:checked]:bg-slate-800">
-            <input type="radio" name="characterMode" value="shape" class="sr-only">
-            <i class="fa-solid fa-circle text-emerald-400 mb-1"></i>
-            <span class="block text-xs font-ultra-block text-emerald-400 uppercase tracking-wider">Teks + Shape</span>
-        </label>
-
-        <!-- BESAR: Teks Oren -->
-        <label class="cursor-pointer border border-slate-700 rounded-xl p-2 text-center transition hover:bg-slate-800 bg-slate-950 has-[:checked]:border-emerald-400 has-[:checked]:bg-slate-800">
-            <input type="radio" name="characterMode" value="icon" class="sr-only">
-            <i class="fa-solid fa-user text-emerald-400 mb-1"></i>
-            <span class="block text-sm font-ultra-block text-orange-500 uppercase tracking-wider">Teks + Icon</span>
-        </label>
-    </div>
-</div>
                             <button type="submit" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold py-3 rounded-xl shadow-lg shadow-amber-500/20 transition flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-paper-plane"></i> TAMBAH KELUAR PAGAR (ANTREAN)
+                                <i class="fa-solid fa-paper-plane"></i> KIRIM USERNAME KE TAWAF
                             </button>
                         </form>
                     </div>
 
-                    <!-- PENGATURAN LATAR BELAKANG & AUDIO -->
+                    <!-- FITUR BARU 1: PENGATURAN LATAR BELAKANG -->
                     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
                         <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
-                            <i class="fa-solid fa-photo-film text-amber-400"></i> Media Custom (Latar & Audio)
+                            <i class="fa-solid fa-image text-amber-400"></i> Latar Belakang (Background)
                         </h2>
-                        
-                        <!-- Latar Canvas Admin -->
                         <div>
-                            <label class="block text-xs font-semibold text-slate-300 mb-1">1. Latar Belakang Canvas Custom</label>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Unggah Gambar Latar kustom</label>
                             <input type="file" id="input-bg-file" accept="image/png, image/jpeg, image/webp" onchange="handleBgUpload(event)"
                                    class="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-amber-400 hover:file:bg-slate-700 cursor-pointer bg-slate-950 border border-slate-800 rounded-xl">
-                            <div class="flex items-center gap-2 mt-2">
-                                <button onclick="resetBgImage()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-semibold py-1.5 rounded-lg transition">
-                                    <i class="fa-solid fa-rotate-left mr-1"></i> Reset Latar Belakang Default
-                                </button>
-                            </div>
                         </div>
+                        <button onclick="resetBgImage()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-bold py-2 rounded-xl transition">
+                            <i class="fa-solid fa-rotate-left mr-1"></i> Kembalikan Latar Default
+                        </button>
+                    </div>
 
-                        <!-- Audio Upload -->
-                        <div class="pt-2 border-t border-slate-800">
-                            <label class="block text-xs font-semibold text-slate-300 mb-1">2. File Audio Latar (MP3/WAV)</label>
-                            <input type="file" id="input-audio-file" accept="audio/mp3, audio/wav, audio/ogg" onchange="handleAudioUpload(event)"
-                                   class="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-emerald-400 hover:file:bg-slate-700 cursor-pointer bg-slate-950 border border-slate-800 rounded-xl">
-                            <div class="flex items-center justify-between gap-2 mt-2">
-                                <button onclick="toggleAudioPlay()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-3 rounded-xl text-xs transition flex items-center gap-1.5">
-                                    <i id="btn-audio-state-icon" class="fa-solid fa-play"></i> <span id="btn-audio-state-text">Putar Audio</span>
-                                </button>
-                                <span id="audio-filename" class="text-[11px] text-slate-400 truncate max-w-[150px]">Default BGM</span>
+                    <!-- FITUR BARU 2, 3, & 4: PENGATURAN AUDIO CUSTOM BACKSOUND -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+                        <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                            <i class="fa-solid fa-music text-amber-400"></i> Audio Latar (Musik/Talbiyah)
+                        </h2>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Unggah Audio (MP3/WAV/OGG)</label>
+                            <input type="file" id="input-bg-audio-file" accept="audio/mp3, audio/wav, audio/ogg, audio/*" onchange="handleAudioUpload(event)"
+                                   class="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-amber-400 hover:file:bg-slate-700 cursor-pointer bg-slate-950 border border-slate-800 rounded-xl">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold text-slate-300 mb-1">
+                                <span>Volume Audio Unggahan</span>
+                                <span id="val-bg-audio-vol" class="text-amber-400 font-bold">50%</span>
                             </div>
+                            <input type="range" id="slider-bg-audio-vol" min="0" max="100" step="5" value="50" oninput="updateBgAudioVolume()" class="w-full accent-amber-500 bg-slate-950 rounded-lg cursor-pointer">
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-slate-400 pt-1">
+                            <span id="bg-audio-status">Status: Belum ada audio</span>
+                            <button onclick="removeBgAudio()" class="text-rose-400 hover:text-rose-300 font-semibold text-xs">Hapus Audio</button>
                         </div>
                     </div>
 
-                    <!-- Kontrol Simulator -->
+                    <!-- Kontrol Simulator & Volume Pemanggilan User -->
                     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-                        <h2 class="text-base font-bold text-slate-100 flex items-center gap-2"><i class="fa-solid fa-sliders text-amber-400"></i> Kontrol Simulator</h2>
+                        <h2 class="text-base font-bold text-slate-100 flex items-center gap-2"><i class="fa-solid fa-sliders text-amber-400"></i> Kontrol Simulator & Suara Panggilan</h2>
                         <div>
-                            <div class="flex justify-between text-xs font-semibold text-slate-300 mb-1"><span>Kecepatan</span><span id="val-speed-multiplier" class="text-amber-400 font-bold">1.0x</span></div>
+                            <div class="flex justify-between text-xs font-semibold text-slate-300 mb-1"><span>Kecepatan Pergerakan</span><span id="val-speed-multiplier" class="text-amber-400 font-bold">1.0x</span></div>
                             <input type="range" id="slider-speed" min="0.3" max="3.0" step="0.1" value="1.0" oninput="updateGlobalSettings()" class="w-full accent-amber-500 bg-slate-950 rounded-lg cursor-pointer">
                         </div>
                         <div>
                             <div class="flex justify-between text-xs font-semibold text-slate-300 mb-1"><span>Ukuran Karakter</span><span id="val-size-scale" class="text-amber-400 font-bold">100%</span></div>
                             <input type="range" id="slider-size" min="50" max="180" step="10" value="100" oninput="updateGlobalSettings()" class="w-full accent-amber-500 bg-slate-950 rounded-lg cursor-pointer">
                         </div>
+                        <!-- PISAH DENGAN AUDIO SYSTEM PANGGILAN USER -->
                         <div>
-                            <div class="flex justify-between text-xs font-semibold text-slate-300 mb-1"><span>Volume Suara</span><span id="val-sound-vol" class="text-amber-400 font-bold">80%</span></div>
+                            <div class="flex justify-between text-xs font-semibold text-slate-300 mb-1"><span>Volume Panggilan Nama User & Efek</span><span id="val-sound-vol" class="text-amber-400 font-bold">80%</span></div>
                             <input type="range" id="slider-volume" min="0" max="100" step="5" value="80" oninput="updateGlobalSettings()" class="w-full accent-amber-500 bg-slate-950 rounded-lg cursor-pointer">
                         </div>
                         <div class="pt-2 grid grid-cols-2 gap-2">
                             <button onclick="togglePauseAnimation()" id="btn-pause-toggle" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-1.5"><i class="fa-solid fa-pause text-amber-400"></i> Jeda</button>
-                            <button onclick="clearAllUsers()" class="bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-1.5"><i class="fa-solid fa-trash-can"></i> Reset Semua Data</button>
+                            <button onclick="clearAllUsers()" class="bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-1.5"><i class="fa-solid fa-trash-can"></i> Reset</button>
                         </div>
                     </div>
 
                     <!-- FORM PENGATURAN GAMBAR KA'BAH -->
                     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
                         <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
-                            <i class="fa-solid fa-image text-amber-400"></i> Pengaturan Gambar Ka'bah
+                            <i class="fa-solid fa-kaaba text-amber-400"></i> Pengaturan Gambar Ka'bah
                         </h2>
                         <div>
                             <label class="block text-xs font-semibold text-slate-300 mb-1.5">Upload / Pilih Gambar Ka'bah Custom</label>
@@ -353,8 +319,8 @@
                 <div class="lg:col-span-7">
                     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl h-full flex flex-col">
                         <div class="flex items-center justify-between mb-4">
-                            <div><h2 class="text-base font-bold text-slate-100 flex items-center gap-2"><i class="fa-solid fa-users text-amber-400"></i> Daftar Semua Jamaah</h2></div>
-                            <span id="badge-active-count" class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-extrabold text-xs px-2.5 py-1 rounded-lg">0 Jamaah</span>
+                            <div><h2 class="text-base font-bold text-slate-100 flex items-center gap-2"><i class="fa-solid fa-users text-amber-400"></i> Jamaah Tawaf Aktif</h2></div>
+                            <span id="badge-active-count" class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-extrabold text-xs px-2.5 py-1 rounded-lg">0 Aktif</span>
                         </div>
                         <div class="flex-1 overflow-x-auto min-h-[300px]">
                             <table class="w-full text-left text-xs text-slate-300">
@@ -385,7 +351,7 @@
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
                     .then(registration => console.log('✅ Service Worker registered:', registration.scope))
-                    .catch(error => console.warn('❌ Service Worker registration skipped:', error));
+                    .catch(error => console.error('❌ Service Worker registration failed:', error));
             });
         }
     </script>
