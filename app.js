@@ -598,19 +598,20 @@ function drawCanvas() {
             }
         }
 
-      // 3b. Draw Username (Font Tebal, Berwarna, + Outline & Bayangan Hitam)
+      // 3b. Draw Username (Font Tebal, Warna Sesuai Pilihan, + Outline & Bayangan Hitam)
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
         let fontSize = Math.floor(r * 0.55);
         if (u.characterMode === 'text') fontSize = Math.floor(22 * scale);
 
-        // Tentukan Warna Berdasarkan Mode Karakter (Biasa=Putih, Sedang=Hijau, Besar=Oren)
-        let textColor = '#FFFFFF'; // Putih (Biasa)
+        // Tentukan Warna Berdasarkan Pilihan Mode Karakter:
+        // 1. Teks Saja = Putih | 2. Teks + Shape = Hijau | 3. Teks + Icon = Oren
+        let textColor = '#FFFFFF'; // Default Putih (Teks Saja)
         if (u.characterMode === 'shape') {
-            textColor = '#34D399'; // Hijau (Sedang)
+            textColor = '#22C55E'; // Hijau (Teks + Shape)
         } else if (u.characterMode === 'icon') {
-            textColor = '#F97316'; // Oren (Besar)
+            textColor = '#F97316'; // Oren (Teks + Icon)
         }
 
         // Set Font Paling Tebal (Rubik 900)
@@ -620,6 +621,16 @@ function drawCanvas() {
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = Math.max(3, fontSize * 0.18);
         ctx.strokeText(`@${u.username}`, 0, 0);
+
+        // 2. Gambar Bayangan Hitam di Belakang Teks
+        ctx.shadowColor = '#000000';
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#000000';
+        ctx.fillText(`@${u.username}`, 2, 2);
+
+        // 3. Gambar Teks Utama dengan Warna Sesuai Ukuran/Mode
+        ctx.fillStyle = textColor;
+        ctx.fillText(`@${u.username}`, 0, 0);
 
         // 2. Gambar Bayangan Hitam di Belakang Teks
         ctx.shadowColor = '#000000';
