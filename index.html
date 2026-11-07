@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIRTUAL TAWAF LIVE 2D</title>
+
+    <!-- PWA Setup -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        window.ref = ref;
+        window.set = set;
+        window.push = push;
+        window.onValue = onValue;
+        window.remove = remove;
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC1kMjsw6YP0ypb-FNY0fymIyNN784moa4",
+            authDomain: "virtual-live-90cf0.firebaseapp.com",
+            databaseURL: "https://virtual-live-90cf0-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "virtual-live-90cf0",
+            storageBucket: "virtual-live-90cf0.firebasestorage.app",
+            messagingSenderId: "964693320155",
+            appId: "1:964693320155:web:c5f334851a7703c72607fe",
+            measurementId: "G-CWJ46MT37P"
+        };
+
+        const rawAppId = typeof __app_id !== 'undefined' ? __app_id : 'virtual-tawaf-demo';
+        window.appId = rawAppId.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            window.db = getDatabase(app);
+            window.auth = getAuth(app);
+            signInAnonymously(window.auth).catch(err => console.warn("Firebase Auth Fallback:", err));
+            console.log("✅ Firebase Core Berhasil Diinisialisasi!");
+            window.dispatchEvent(new Event('firebaseReady'));
+        } catch (e) {
+            console.warn("❌ Gagal Inisialisasi Firebase:", e);
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+        .font-arabic { font-family: 'Amiri', serif; }
+        .portrait-container {
+            width: 100%; max-width: 480px; height: calc(100vh - 40px); max-height: 853px;
+            aspect-ratio: 9 / 16; margin: auto; position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); border-radius: 16px;
+            overflow: hidden; background: #111827;
+        }
+        @media (min-width: 1080px) and (min-height: 1920px) {
+            .obs-mode .portrait-container { max-width: 1080px; max-height: 1920px; height: 100vh; border-radius: 0; }
+        }
+        canvas { width: 100%; height: 100%; display: block; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        .live-dot { box-shadow: 0 0 10px #22c55e; animation: pulse-dot 1.5s infinite; }
+        @keyframes pulse-dot {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+    <!-- HEADER -->
+    <header class="bg-slate-900/90 border-b border-slate-800 backdrop-blur sticky top-0 z-50 px-4 py-2.5">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 font-bold">
+                    <i class="fa-solid font-arabic text-xl">🕋</i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-base tracking-wide bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 bg-clip-text text-transparent">
+                        VIRTUAL TAWAF LIVE 2D
+                    </h1>
+                    <p class="text-[10px] text-slate-400">TikTok LIVE OBS Interactive Canvas</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="btn-mode-display" onclick="switchView('display')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-md">
+                    <i class="fa-solid fa-desktop"></i> <span class="hidden sm:inline">Tampilan</span> OBS Live
+                </button>
+                <button id="btn-mode-admin" onclick="switchView('admin')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700">
+                    <i class="fa-solid fa-sliders"></i> <span class="hidden sm:inline">Dashboard</span> Admin
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-2 sm:p-4 md:p-6">
+        <!-- VIEW DISPLAY -->
+        <section id="view-display" class="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] py-2">
+            <div class="w-full text-center mb-2 flex items-center justify-between px-2 max-w-[480px]">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 live-dot"></span>
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-300">OBS Canvas Output (9:16)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btn-audio-init" onclick="toggleAudioPlay()" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2.5 py-1 rounded-md text-amber-400 transition flex items-center gap-1">
+                        <i id="audio-btn-icon" class="fa-solid fa-play"></i> <span id="audio-btn-text">Putar Audio</span>
+                    </button>
+                    <button onclick="toggleFullscreen()" class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-1 rounded-md text-slate-400 transition" title="Layar Penuh">
+                        <i class="fa-solid fa-expand"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="portrait-container border-2 border-slate-800" id="obs-canvas-wrapper">
+                <canvas id="tawafCanvas" width="1080" height="1920"></canvas>
+                <div class="absolute top-4 left-4 bg-slate-950/80 backdrop-blur border border-amber-500/30 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-lg pointer-events-none">
+                    <i class="fa-solid fa-users text-amber-400 text-xs"></i>
+                    <span class="text-xs font-bold text-slate-200"><span id="live-active-count">0</span> Jamaah Tawaf</span>
+                </div>
+                <div class="absolute top-4 right-4 bg-slate-950/80 backdrop-blur border border-amber-500/30 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-lg pointer-events-none">
+                    <i class="fa-solid fa-hourglass-start text-blue-400 text-xs"></i>
+                    <span class="text-xs font-bold text-slate-200"><span id="live-queue-count">0</span> Antrean Pagar</span>
+                </div>
+                <div class="absolute top-12 right-4 bg-slate-950/80 backdrop-blur border border-amber-500/30 px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-lg pointer-events-none mt-1">
+                    <i class="fa-solid fa-rotate-right text-emerald-400 text-xs"></i>
+                    <span class="text-xs font-bold text-slate-200"><span id="live-total-laps">0</span> Total Putaran</span>
+                </div>
+            </div>
+            <p class="text-xs text-slate-500 mt-2 text-center">
+                <i class="fa-solid fa-circle-info text-amber-500/70 mr-1"></i>
+                Gunakan URL halaman ini pada <strong>OBS Browser Source</strong> dengan resolusi <strong>1080 x 1920</strong>.
+            </p>
+        </section>
+
+        <!-- VIEW ADMIN -->
+        <section id="view-admin" class="hidden space-y-6">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 text-xl font-bold"><i class="fa-solid fa-hourglass-half"></i></div>
+                    <div><p class="text-xs text-slate-400">Antrean Pagar</p><h3 id="stat-queue" class="text-xl font-extrabold text-blue-400">0</h3></div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl font-bold"><i class="fa-solid fa-walking"></i></div>
+                    <div><p class="text-xs text-slate-400">Aktif Tawaf</p><h3 id="stat-active" class="text-xl font-extrabold text-emerald-400">0</h3></div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-xl font-bold"><i class="fa-solid fa-flag-checkered"></i></div>
+                    <div><p class="text-xs text-slate-400">Selesai (Auto Remove)</p><h3 id="stat-completed" class="text-xl font-extrabold text-amber-400">0</h3></div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 text-xl font-bold"><i class="fa-solid fa-rotate text-lg"></i></div>
+                    <div><p class="text-xs text-slate-400">Total Putaran</p><h3 id="stat-laps" class="text-xl font-extrabold text-purple-300">0</h3></div>
+                </div>
+            </div>
+
+            <!-- TOMBOL AKSI CEPAT ANTREAN -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-door-open text-amber-400 text-xl"></i>
+                    <div>
+                        <h3 class="font-bold text-slate-100 text-sm">Kontrol Gerbang Pagar Masuk</h3>
+                        <p class="text-xs text-slate-400">Izinkan user antrean di luar pagar untuk mulai bertawaf</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="approveQueueUser(1)" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-lg transition">
+                        <i class="fa-solid fa-person-walking-arrow-right"></i> Masukkan 1 User
+                    </button>
+                    <button onclick="approveQueueUser('all')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-lg transition">
+                        <i class="fa-solid fa-users-rectangle"></i> Masukkan Semua Antrean
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-5 space-y-6">
+                    <!-- Form Spawn -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none"></div>
+                        <h2 class="text-base font-bold text-slate-100 mb-4 flex items-center gap-2"><i class="fa-solid fa-circle-plus text-amber-400"></i> Tambah Username Gift TikTok</h2>
+                        <form id="form-spawn-user" onsubmit="handleSpawnUser(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Username Penonton</label>
+                                <div class="relative">
+                                    <span class="absolute left-3.5 top-2.5 text-slate-500 text-sm font-bold">@</span>
+                                    <input type="text" id="input-username" required placeholder="misal: ahmad_hidayat" class="w-full bg-slate-950 border border-slate-700 rounded-xl py-2.5 pl-8 pr-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 transition">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-2">Kategori Gift</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <label class="cursor-pointer border border-slate-700 rounded-xl p-2.5 text-center transition hover:bg-slate-800 bg-slate-950 has-[:checked]:border-slate-400 has-[:checked]:bg-slate-800">
+                                        <input type="radio" name="giftCategory" value="biasa" checked class="sr-only">
+                                        <div class="w-4 h-4 rounded-full bg-slate-200 border border-slate-400 mx-auto mb-1"></div>
+                                        <span class="block text-xs font-bold text-slate-200">BIASA</span>
+                                    </label>
+                                    <label class="cursor-pointer border border-slate-700 rounded-xl p-2.5 text-center transition hover:bg-slate-800 bg-slate-950 has-[:checked]:border-blue-400 has-[:checked]:bg-slate-800">
+                                        <input type="radio" name="giftCategory" value="sedang" class="sr-only">
+                                        <div class="w-5 h-5 rounded-full bg-slate-100 border-2 border-blue-400 mx-auto mb-1 shadow"></div>
+                                        <span class="block text-xs font-bold text-blue-300">SEDANG</span>
+                                    </label>
+                                    <label class="cursor-pointer border border-slate-700 rounded-xl p-2.5 text-center transition hover:bg-slate-800 bg-slate-950 has-[:checked]:border-amber-400 has-[:checked]:bg-slate-800">
+                                        <input type="radio" name="giftCategory" value="besar" class="sr-only">
+                                        <div class="w-6 h-6 rounded-full bg-gradient-to-r from-amber-300 to-amber-500 border-2 border-yellow-200 mx-auto mb-1 shadow-lg shadow-amber-500/40"></div>
+                                        <span class="block text-xs font-bold text-amber-400">BESAR</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Pilihan Mode Karakter -->
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-2">Tampilan Karakter</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <label class="cursor-pointer border border-slate-700 rounded-xl p-2 text-center transition hover:bg-slate-800 bg-slate-950 has-[:checked]:border-emerald-400 has-[:checked]:bg-slate-800">
+                                        <input type="radio" name="characterMode" value="text" checked class="sr-only">
+                                        <i class="fa-solid fa-font text-emerald-400 mb-1"></i>
+                                        <span class="block text-[10px] font-bold text-slate-200">Teks Saja</span>
+                                    </label>
+                                    <label class="cursor-pointer border border-slate-700 rounded-xl p-2 text-center transition hover:bg-slate-800 bg-slate-950 has-[:checked]:border-emerald-400 has-[:checked]:bg-slate-800">
+                                        <input type="radio" name="characterMode" value="shape" class="sr-only">
+                                        <i class="fa-solid fa-circle text-emerald-400 mb-1"></i>
+                                        <span class="block text-[10px] font-bold text-slate-200">Teks + Shape</span>
+                                    </label>
+                                    <label class="cursor-pointer border border-slate-700 rounded-xl p-2 text-center transition hover:bg-slate-800 bg-slate-950 has-[:checked]:border-emerald-400 has-[:checked]:bg-slate-800">
+                                        <input type="radio" name="characterMode" value="icon" class="sr-only">
+                                        <i class="fa-solid fa-user text-emerald-400 mb-1"></i>
+                                        <span class="block text-[10px] font-bold text-slate-200">Teks + Icon</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold py-3 rounded-xl shadow-lg shadow-amber-500/20 transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-paper-plane"></i> TAMBAH KELUAR PAGAR (ANTREAN)
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- PENGATURAN LATAR BELAKANG & AUDIO -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+                        <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                            <i class="fa-solid fa-photo-film text-amber-400"></i> Media Custom (Latar & Audio)
+                        </h2>
+                        
+                        <!-- Latar Canvas Admin -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">1. Latar Belakang Canvas Custom</label>
+                            <input type="file" id="input-bg-file" accept="image/png, image/jpeg, image/webp" onchange="handleBgUpload(event)"
+                                   class="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-amber-400 hover:file:bg-slate-700 cursor-pointer bg-slate-950 border border-slate-800 rounded-xl">
+                            <div class="flex items-center gap-2 mt-2">
+                                <button onclick="resetBgImage()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-semibold py-1.5 rounded-lg transition">
+                                    <i class="fa-solid fa-rotate-left mr-1"></i> Reset Latar Belakang Default
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Audio Upload -->
+                        <div class="pt-2 border-t border-slate-800">
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">2. File Audio Latar (MP3/WAV)</label>
+                            <input type="file" id="input-audio-file" accept="audio/mp3, audio/wav, audio/ogg" onchange="handleAudioUpload(event)"
+                                   class="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-emerald-400 hover:file:bg-slate-700 cursor-pointer bg-slate-950 border border-slate-800 rounded-xl">
+                            <div class="flex items-center justify-between gap-2 mt-2">
+                                <button onclick="toggleAudioPlay()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-3 rounded-xl text-xs transition flex items-center gap-1.5">
+                                    <i id="btn-audio-state-icon" class="fa-solid fa-play"></i> <span id="btn-audio-state-text">Putar Audio</span>
+                                </button>
+                                <span id="audio-filename" class="text-[11px] text-slate-400 truncate max-w-[150px]">Default BGM</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kontrol Simulator -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+                        <h2 class="text-base font-bold text-slate-100 flex items-center gap-2"><i class="fa-solid fa-sliders text-amber-400"></i> Kontrol Simulator</h2>
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold text-slate-300 mb-1"><span>Kecepatan</span><span id="val-speed-multiplier" class="text-amber-400 font-bold">1.0x</span></div>
+                            <input type="range" id="slider-speed" min="0.3" max="3.0" step="0.1" value="1.0" oninput="updateGlobalSettings()" class="w-full accent-amber-500 bg-slate-950 rounded-lg cursor-pointer">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold text-slate-300 mb-1"><span>Ukuran Karakter</span><span id="val-size-scale" class="text-amber-400 font-bold">100%</span></div>
+                            <input type="range" id="slider-size" min="50" max="180" step="10" value="100" oninput="updateGlobalSettings()" class="w-full accent-amber-500 bg-slate-950 rounded-lg cursor-pointer">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold text-slate-300 mb-1"><span>Volume Suara</span><span id="val-sound-vol" class="text-amber-400 font-bold">80%</span></div>
+                            <input type="range" id="slider-volume" min="0" max="100" step="5" value="80" oninput="updateGlobalSettings()" class="w-full accent-amber-500 bg-slate-950 rounded-lg cursor-pointer">
+                        </div>
+                        <div class="pt-2 grid grid-cols-2 gap-2">
+                            <button onclick="togglePauseAnimation()" id="btn-pause-toggle" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-1.5"><i class="fa-solid fa-pause text-amber-400"></i> Jeda</button>
+                            <button onclick="clearAllUsers()" class="bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-1.5"><i class="fa-solid fa-trash-can"></i> Reset Semua Data</button>
+                        </div>
+                    </div>
+
+                    <!-- FORM PENGATURAN GAMBAR KA'BAH -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+                        <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+                            <i class="fa-solid fa-image text-amber-400"></i> Pengaturan Gambar Ka'bah
+                        </h2>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Upload / Pilih Gambar Ka'bah Custom</label>
+                            <input type="file" id="input-kaaba-file" accept="image/png, image/jpeg, image/webp" onchange="handleKaabaUpload(event)"
+                                   class="block w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-amber-400 hover:file:bg-slate-700 cursor-pointer bg-slate-950 border border-slate-800 rounded-xl">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 pt-1">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Skala Ka'bah</label>
+                                <input type="range" id="slider-kaaba-scale" min="50" max="200" step="5" value="100" oninput="updateKaabaAdjustments()" class="w-full accent-amber-500 bg-slate-950 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Offset Vertikal (Y)</label>
+                                <input type="range" id="slider-kaaba-offset-y" min="-100" max="100" step="5" value="0" oninput="updateKaabaAdjustments()" class="w-full accent-amber-500 bg-slate-950 rounded-lg">
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 pt-1">
+                            <button onclick="resetKaabaImage()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-bold py-2 rounded-xl transition">
+                                <i class="fa-solid fa-rotate-left mr-1"></i> Gambar Default
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Tabel Users -->
+                <div class="lg:col-span-7">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl h-full flex flex-col">
+                        <div class="flex items-center justify-between mb-4">
+                            <div><h2 class="text-base font-bold text-slate-100 flex items-center gap-2"><i class="fa-solid fa-users text-amber-400"></i> Daftar Semua Jamaah</h2></div>
+                            <span id="badge-active-count" class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-extrabold text-xs px-2.5 py-1 rounded-lg">0 Jamaah</span>
+                        </div>
+                        <div class="flex-1 overflow-x-auto min-h-[300px]">
+                            <table class="w-full text-left text-xs text-slate-300">
+                                <thead class="bg-slate-950 text-slate-400 uppercase font-bold text-[10px] tracking-wider">
+                                    <tr>
+                                        <th class="py-3 px-3 rounded-l-xl">Username</th>
+                                        <th class="py-3 px-2">Gift</th>
+                                        <th class="py-3 px-2">Putaran</th>
+                                        <th class="py-3 px-2">Status</th>
+                                        <th class="py-3 px-3 text-right rounded-r-xl">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-users-body" class="divide-y divide-slate-800/60"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- LOAD LOGIC JS -->
+    <script src="app.js"></script>
+    
+    <!-- REGISTER SERVICE WORKER -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => console.log('✅ Service Worker registered:', registration.scope))
+                    .catch(error => console.warn('❌ Service Worker registration skipped:', error));
+            });
+        }
+    </script>
+</body>
+</html>
