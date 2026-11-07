@@ -200,11 +200,30 @@ async function loadStateFromStorage() {
     updateUI();
 }
 
+// --- VOICE WELCOME (SPEECH SYNTHESIS) ---
+function speakWelcome(username) {
+    if (!('speechSynthesis' in window)) return;
+    try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(`Selamat datang ${username}`);
+        utterance.lang = 'id-ID';
+        utterance.volume = globalSettings.volume;
+        
+        const voices = window.speechSynthesis.getVoices();
+        const idVoice = voices.find(v => v.lang.includes('id') || v.lang.includes('ID'));
+        if (idVoice) utterance.voice = idVoice;
+
+        window.speechSynthesis.speak(utterance);
+    } catch (e) {
+        console.warn("Speech Synthesis error:", e);
+    }
+}
+
 // --- USER MANAGEMENT ---
 function handleSpawnUser(e) {
     e.preventDefault();
     const usernameInput = document.getElementById('input-username');
-    const username = usernameInput.value.trim();
+    const username = usernameInput.value.trim().replace(/^@/, '');
     if (!username) return;
 
     const giftCategory = document.querySelector('input[name="giftCategory"]:checked').value;
@@ -235,6 +254,10 @@ function handleSpawnUser(e) {
     users.push(newUser);
     saveStateToStorage();
     updateUI();
+
+    // Bunyikan ucapan selamat datang secara otomatis
+    speakWelcome(username);
+
     usernameInput.value = '';
 }
 
@@ -529,23 +552,32 @@ function drawCanvas() {
 
         const scale = globalSettings.sizeScale;
 
+        let baseRadius = 35;
         let color = '#38bdf8';
-        if (u.giftCategory === 'sedang') color = '#60a5fa';
-        if (u.giftCategory === 'besar') color = '#fbbf24';
+        if (u.giftCategory === 'sedang') {
+            baseRadius = 45;
+            color = '#60a5fa';
+        } else if (u.giftCategory === 'besar') {
+            baseRadius = 55;
+            color = '#fbbf24';
+        }
         if (u.status === 'queue') color = '#94a3b8';
 
+        const r = baseRadius * scale;
+
+        // 3a. Draw Shape / Circle Background
         if (u.characterMode === 'shape' || u.characterMode === 'icon') {
             ctx.beginPath();
-            ctx.arc(0, 0, 16 * scale, 0, Math.PI * 2);
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
             ctx.fillStyle = color;
             ctx.fill();
             ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2 * scale;
+            ctx.lineWidth = 3 * scale;
             ctx.stroke();
 
             if (u.characterMode === 'icon') {
-                ctx.fillStyle = '#0f172a';
-                ctx.font = `${Math.round(14 * scale)}px "Font Awesome 6 Free"`;
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.25)';
+                ctx.font = `${Math.round(r * 1.1)}px "Font Awesome 6 Free"`;
                 ctx.fontWeight = "900";
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
@@ -553,21 +585,40 @@ function drawCanvas() {
             }
         }
 
-        ctx.fillStyle = u.status === 'queue' ? '#cbd5e1' : '#ffffff';
-        ctx.font = `bold ${Math.round(14 * scale)}px Inter`;
+        // 3b. Draw Username (Besar & Tebal di dalam Lingkaran)
+        ctx.fillStyle = (u.characterMode !== 'text' && u.giftCategory === 'besar') ? '#451a03' : (u.characterMode !== 'text' ? '#0f172a' : '#ffffff');
         ctx.textAlign = 'center';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-        ctx.shadowBlur = 4;
-        ctx.fillText(`@${u.username}`, 0, (u.characterMode !== 'text' ? 28 : 5) * scale);
+        ctx.textBaseline = 'middle';
 
+        let fontSize = Math.floor(r * 0.55);
+        if (u.characterMode === 'text') fontSize = Math.floor(22 * scale);
+        
+        ctx.font = `900 ${fontSize}px Inter, sans-serif`;
+
+        // Fit Text width inside circle
+        const maxTextWidth = u.characterMode !== 'text' ? r * 1.6 : 300;
+        let textWidth = ctx.measureText(`@${u.username}`).width;
+        if (textWidth > maxTextWidth) {
+            fontSize = Math.floor(fontSize * (maxTextWidth / textWidth));
+            ctx.font = `900 ${fontSize}px Inter, sans-serif`;
+        }
+
+        ctx.shadowColor = u.characterMode === 'text' ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.2)';
+        ctx.shadowBlur = u.characterMode === 'text' ? 6 : 0;
+        ctx.fillText(`@${u.username}`, 0, 0);
+
+        // 3c. Draw Lap Indicator (Bawah Lingkaran)
+        ctx.shadowBlur = 0;
         if (u.status === 'tawaf') {
+            const badgeY = u.characterMode !== 'text' ? r + (12 * scale) : 22 * scale;
             ctx.fillStyle = '#10b981';
-            ctx.font = `bold ${Math.round(11 * scale)}px Inter`;
-            ctx.fillText(`[${u.laps}/5]`, 0, (u.characterMode !== 'text' ? 42 : 20) * scale);
+            ctx.font = `bold ${Math.round(12 * scale)}px Inter, sans-serif`;
+            ctx.fillText(`[${u.laps}/5]`, 0, badgeY);
         } else if (u.status === 'queue') {
+            const badgeY = u.characterMode !== 'text' ? r + (12 * scale) : 22 * scale;
             ctx.fillStyle = '#f59e0b';
-            ctx.font = `bold ${Math.round(10 * scale)}px Inter`;
-            ctx.fillText(`(Antrean Pagar)`, 0, (u.characterMode !== 'text' ? 42 : 20) * scale);
+            ctx.font = `bold ${Math.round(11 * scale)}px Inter, sans-serif`;
+            ctx.fillText(`(Antrean)`, 0, badgeY);
         }
 
         ctx.restore();
